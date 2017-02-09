@@ -1,10 +1,71 @@
-.pixelated {
-	height: 256px;
-	width: 256px;
-  image-rendering: optimizeSpeed;             /* Older versions of FF          */
-  image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
-  image-rendering: -webkit-optimize-contrast; /* Safari                        */
-  image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
-  image-rendering: pixelated;                 /* Awesome future-browsers       */
-  -ms-interpolation-mode: nearest-neighbor;   /* IE                            */
+body {
+	margin: 0;
 }
+
+.row {
+	display: flex;
+	flex-direction: row;
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
+}
+
+.vertical-center {
+	align-items: center;
+}
+
+.horizontal-center {
+	justify-content: center;
+}
+
+.navigation {
+	left: 0;
+	width: 100%;
+	min-height: 50px;
+	background-color: grey;
+	text-align: center;
+}
+
+.container {
+	padding:8px;
+}
+
+#grid-management {
+	min-height: 300px;
+	background-color: blue;
+}
+
+#grid-container {
+	position: relative;
+	background-color: lightgray;
+	width: 800px;
+	height: 400px;
+	overflow:scroll;
+	margin-left:150px;
+}
+
+#right-container {
+	padding-left: 8px;
+}
+
+#sprite-preview {
+	background-position: top left;
+	background-repeat: no-repeat;
+	position: absolute;
+	opacity: 0.4;
+	pointer-events: none;
+}
+
+
+/*::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 7px;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(0,0,0,.5);
+    -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+}*/

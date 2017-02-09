@@ -36,9 +36,9 @@
         this.spriteSheets = [];
         this.$canvas = $('<canvas/>');
         this.ctx = this.$canvas[0].getContext("2d");
-        this.ctx.canvas.width = 400;
-        this.ctx.canvas.height = 400;
-        $("body").append(this.$canvas);
+        this.ctx.canvas.width = 200;
+        this.ctx.canvas.height = 200;
+        $("#pallet-container").append(this.$canvas);
     }
 
     Pallet.prototype.setSpriteSize = function (spriteSizeX, spriteSizeY) { // add functionality for both x and y
@@ -57,10 +57,26 @@
         this.selectedSheet = this.spriteSheets[index];
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
         this.ctx.drawImage(this.selectedSheet, 0, 0);
+
+        // Drawing vertical lines
+        for (let x = 0; x <= this.ctx.canvas.width; x += this.tileSize) {
+            this.ctx.moveTo(x, 0);
+            this.ctx.lineTo(x, this.ctx.canvas.height);
+        }
+
+        // Drawing horizontal lines
+        for (let y = 0; y <= this.ctx.canvas.height; y += this.tileSize) {
+            this.ctx.moveTo(0, y);
+            this.ctx.lineTo(this.ctx.canvas.width, y);
+        }
+
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = "white";
+        this.ctx.stroke();
     }
 
     function Grid (tileSize, tileCount_X, tileCount_Y) {
-        this.$canvas = $('<canvas></canvas>');
+        this.$canvas = $('<canvas/>');
         this.ctx = this.$canvas[0].getContext("2d");
         this.spriteData = null;
         this.tileSize = tileSize;
@@ -74,8 +90,7 @@
 
         this.ctx.canvas.width = this.tileCount_X * this.tileSize;
         this.ctx.canvas.height = this.tileCount_Y * this.tileSize;
-        $("body").append(this.$canvas);
-        this.$canvas.css("position", "absolute");
+        $("#grid-container").append(this.$canvas);
 
         //Prevents the canvas from anti-aliasing tiles
         this.ctx.mozImageSmoothingEnabled = false;
@@ -83,6 +98,10 @@
         this.ctx.msImageSmoothingEnabled = false;
         this.ctx.imageSmoothingEnabled = false;
         this.ctx.oImageSmoothingEnabled = false;
+
+        // Fill Canvas White
+        this.ctx.fillStyle = "white";
+        this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
         // Drawing vertical lines
         for (let x = 0; x <= this.ctx.canvas.width; x += this.ctx.canvas.width/this.tileCount_X) {
@@ -99,6 +118,7 @@
         this.ctx.strokeStyle = "black";
         this.ctx.stroke();
 
+        // Click to add new sprite to grid
         this.$canvas.click(function (event) {
             if (!this.spriteData) return; // Some error for no sprite selected
             const offset = this.$canvas.offset();
@@ -111,6 +131,26 @@
                 this.tileSize, this.tileSize); // x, y placement size
             this.level[tile_y][tile_x] = true;
         }.bind(this));
+
+        // Hovering over grid previews the sprites
+        this.$canvas.mousemove(function (event) {
+            const offset = this.$canvas.offset();
+            if (!this.spriteData) return;
+            $("#sprite-preview").css({
+                'top': Math.floor((event.pageY - offset.top) / (this.tileSize)) * this.tileSize + offset.top,
+                'left': Math.floor((event.pageX - offset.left) / (this.tileSize)) * this.tileSize + offset.left,
+                'background-image': 'url(' + this.spriteData.img.src + ')',
+                'background-position-x': -1*(this.spriteData.x * this.spriteData.dx),
+                'background-position-y': -1*(this.spriteData.y * this.spriteData.dy),
+                'width': this.spriteData.dx,
+                'height': this.spriteData.dy,
+            });
+        }.bind(this));
+
+        // On Mouse out of grid, hides the sprite preview
+        // this.$canvas.mouseout(function (event) {
+        //     $("#sprite-preview").css({'background-image': ''});
+        // })
     }
 
     Grid.prototype.setSprite = function (spriteData) {
@@ -121,9 +161,9 @@
         this.$canvas.toggle();
     }
 
-    var world = new World(40, 10, 9);
+    var world = new World(40, 18, 9);
     world.addGrid();
-    world.pallet.addSpriteSheet("../sprites/myart.png");
+    world.pallet.addSpriteSheet("../sprites/screenshot.png");
     world.pallet.setSpriteSize(40);
 
     // $("#zoom-in").on("click", function () {

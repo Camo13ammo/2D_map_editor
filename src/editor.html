@@ -1,22 +1,29 @@
 <!DOCTYPE HTML>
 <html>
   <head>
-      <title>The Canvas Tag</title>
+      <title>2D Tile Editor</title>
   </head>
   <body>
-    <div>
-      <!-- <canvas id="canvas_1"></canvas> -->
-    <div>
-    <!-- <form> -->
-      Tile Size: <input id="tile_size" type="number"></input>
-      <!-- Tiles: <input id="tile_count" type="number"></input> -->
-      <button type="submit">Click Me!</button>
-    <!-- </form> -->
-    <button id="zoom-in">Zoom In!</button>
-    <button id="zoom-out">Zoom Out!</button>
-    <input id="spriteSheetUpload" type="file"></input>
-    <img id="spritePreview" src="">
+    <div class="row navigation vertical-center horizontal-center">
+      <div><i class="fa fa-file-o" aria-hidden="true"></i></div>
+      <div><i class="fa fa-folder-open" aria-hidden="true"></i></div>
+      <div><i class="fa fa-floppy-o" aria-hidden="true"></i></div>
+      <div><i class="fa fa-undo" aria-hidden="true"></i></div>
+      <div><i class="fa fa-repeat" aria-hidden="true"></i></div>
+      <div><i class="fa fa-eraser" aria-hidden="true"></i></div>
+    </div>
+    <div class="row container">
+      <div id="left-container"></div>
+      <div id="grid-container" class="row vertical-center horizontal-center"></div>
+      <div id="right-container" class="column">
+        <div id="minimap"></div>
+        <div id="grid-management"></div>
+        <div id="pallet-container" style="border: 1px solid black;"></div>
+      <div>
+    </div>
+    <div id="sprite-preview" src=""><div>
   </body>
+  <link rel="stylesheet" href="../node_modules/font-awesome/css/font-awesome.min.css">
   <link rel="stylesheet" type="text/css" href="editor.css">
   <script type="text/javascript" src="../node_modules/jquery/dist/jquery.min.js"></script>
   <script type="text/javascript" src="./editor.js"></script>
