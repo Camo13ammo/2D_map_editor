@@ -1,6 +1,6 @@
 'use strict';
 
-(function init () {
+(() => {
 
     function World (tileSize, tileCount_X, tileCount_Y) {
         this.tileSize = tileSize;
@@ -8,17 +8,16 @@
         this.tileCount_Y = tileCount_Y;
         this.grids = [];
         this.pallet = new Pallet(tileSize);
-        let self = this;
-        this.pallet.$canvas.on("click", function (event) {
-            const offset = self.pallet.$canvas.offset();
+        this.pallet.$canvas.click(event => {
+            const offset = this.pallet.$canvas.offset();
             const imgData = {
-                img: self.pallet.selectedSheet,
-                x: Math.floor((event.pageX - offset.left) / (self.pallet.tileSize)),
-                y: Math.floor((event.pageY - offset.top) / (self.pallet.tileSize)),
-                dx: self.pallet.tileSize,
-                dy: self.pallet.tileSize
+                img: this.pallet.selectedSheet,
+                x: Math.floor((event.pageX - offset.left) / (this.pallet.tileSize)),
+                y: Math.floor((event.pageY - offset.top) / (this.pallet.tileSize)),
+                dx: this.pallet.tileSize,
+                dy: this.pallet.tileSize
             };
-            self.grids.forEach(grid => {
+            this.grids.forEach(grid => {
                 grid.setSprite(imgData);
             })
         });
@@ -36,18 +35,19 @@
         this.spriteSheets = [];
         this.$canvas = $('<canvas/>');
         this.ctx = this.$canvas[0].getContext("2d");
-        this.ctx.canvas.width = 200;
-        this.ctx.canvas.height = 200;
         $("#pallet-container").append(this.$canvas);
     }
 
-    Pallet.prototype.setSpriteSize = function (spriteSizeX, spriteSizeY) { // add functionality for both x and y
+    // TODO: add functionality for both x and y
+    Pallet.prototype.setSpriteSize = function (spriteSizeX, spriteSizeY) {
         this.tileSize = spriteSizeX;
     }
 
     Pallet.prototype.addSpriteSheet = function (spriteURL) {
         let img = new Image();
         img.onload = function() {
+            this.ctx.canvas.height = img.height;
+            this.ctx.canvas.width = img.width;
             this.toggleSpriteSheet(this.spriteSheets.push(img)-1);
         }.bind(this);
         img.src = spriteURL;
@@ -85,7 +85,6 @@
         this.level = Array(tileCount_Y).fill().map(() => Array(tileCount_X).fill(false));
     }
 
-
     Grid.prototype.createAndShow = function () {
 
         this.ctx.canvas.width = this.tileCount_X * this.tileSize;
@@ -119,7 +118,7 @@
         this.ctx.stroke();
 
         // Click to add new sprite to grid
-        this.$canvas.click(function (event) {
+        this.$canvas.mousedown(event => {
             if (!this.spriteData) return; // Some error for no sprite selected
             const offset = this.$canvas.offset();
             const tile_x = Math.floor((event.pageX - offset.left) / (this.tileSize));
@@ -130,27 +129,49 @@
                 tile_x * this.tileSize, tile_y * this.tileSize, // x, y placement start
                 this.tileSize, this.tileSize); // x, y placement size
             this.level[tile_y][tile_x] = true;
-        }.bind(this));
+        });
+
+        this.$canvas.mouseup(event => {
+            var x = this.$canvas[0].toDataURL();
+            $("#grid-management").css({
+                "background-image" : "url(" + x + ")",
+                "background-size": "contain",
+                "background-repeat": "no-repeat"
+            });
+        })
 
         // Hovering over grid previews the sprites
-        this.$canvas.mousemove(function (event) {
+        this.$canvas.mousemove(event => {
             const offset = this.$canvas.offset();
-            if (!this.spriteData) return;
-            $("#sprite-preview").css({
+            let $preview = $("#sprite-preview");
+            $preview.show();
+            $preview.css({
                 'top': Math.floor((event.pageY - offset.top) / (this.tileSize)) * this.tileSize + offset.top,
                 'left': Math.floor((event.pageX - offset.left) / (this.tileSize)) * this.tileSize + offset.left,
-                'background-image': 'url(' + this.spriteData.img.src + ')',
-                'background-position-x': -1*(this.spriteData.x * this.spriteData.dx),
-                'background-position-y': -1*(this.spriteData.y * this.spriteData.dy),
-                'width': this.spriteData.dx,
-                'height': this.spriteData.dy,
-            });
-        }.bind(this));
+            })
+            if (this.spriteData) {
+                $preview.css({
+                    'border': 'none',
+                    'background-image': 'url(' + this.spriteData.img.src + ')',
+                    'background-position-x': -1 * (this.spriteData.x * this.spriteData.dx),
+                    'background-position-y': -1 * (this.spriteData.y * this.spriteData.dy),
+                    'opacity': .4,
+                    'width': this.spriteData.dx,
+                    'height': this.spriteData.dy,
+                });
+            } else {
+                $preview.css({
+                    'border': '1px solid black',
+                    'width': this.tileSize-1,
+                    'height': this.tileSize-1,
+                })
+            }
+        });
 
         // On Mouse out of grid, hides the sprite preview
-        // this.$canvas.mouseout(function (event) {
-        //     $("#sprite-preview").css({'background-image': ''});
-        // })
+        this.$canvas.mouseout(event => {
+            $("#sprite-preview").hide();
+        })
     }
 
     Grid.prototype.setSprite = function (spriteData) {
@@ -161,11 +182,30 @@
         this.$canvas.toggle();
     }
 
-    var world = new World(40, 18, 9);
+    var world = new World(48, 20, 19);
     world.addGrid();
     world.pallet.addSpriteSheet("../sprites/screenshot.png");
-    world.pallet.setSpriteSize(40);
+    world.pallet.setSpriteSize(48);
 
+    $("#button").click(function() {
+        $("#upload").click();
+    })
+
+    $("#upload").change(function() {
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                world.pallet.addSpriteSheet(e.target.result);
+            }
+
+            reader.readAsDataURL(this.files[0]);
+        }
+    })
+
+    // $("#button").click(() => {
+
+    // })
     // $("#zoom-in").on("click", function () {
     //     world.pallet.addSpriteSheet("../sprites/ss2.png");
     // })
