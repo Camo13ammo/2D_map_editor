@@ -89,7 +89,7 @@
 
         this.ctx.canvas.width = this.tileCount_X * this.tileSize;
         this.ctx.canvas.height = this.tileCount_Y * this.tileSize;
-        $("#grid-container").append(this.$canvas);
+        $("#grid-container").prepend(this.$canvas);
 
         //Prevents the canvas from anti-aliasing tiles
         this.ctx.mozImageSmoothingEnabled = false;
@@ -132,22 +132,22 @@
         });
 
         this.$canvas.mouseup(event => {
-            var x = this.$canvas[0].toDataURL();
+            const snap = this.$canvas[0].toDataURL();
             $("#grid-management").css({
-                "background-image" : "url(" + x + ")",
+                "background-image" : "url(" + snap + ")",
                 "background-size": "contain",
                 "background-repeat": "no-repeat"
             });
-        })
+        }).mouseup(); // Initial click to display grid.
 
         // Hovering over grid previews the sprites
         this.$canvas.mousemove(event => {
             const offset = this.$canvas.offset();
-            let $preview = $("#sprite-preview");
+            const $preview = $("#sprite-preview");
             $preview.show();
             $preview.css({
-                'top': Math.floor((event.pageY - offset.top) / (this.tileSize)) * this.tileSize + offset.top,
-                'left': Math.floor((event.pageX - offset.left) / (this.tileSize)) * this.tileSize + offset.left,
+                'top': Math.floor((event.pageY - offset.top) / (this.tileSize)) * this.tileSize,
+                'left': Math.floor((event.pageX - offset.left) / (this.tileSize)) * this.tileSize,
             })
             if (this.spriteData) {
                 $preview.css({
@@ -161,9 +161,9 @@
                 });
             } else {
                 $preview.css({
-                    'border': '1px solid black',
-                    'width': this.tileSize-1,
-                    'height': this.tileSize-1,
+                    'border': '2px solid black',
+                    'min-width': this.tileSize-4,
+                    'height': this.tileSize-4,
                 })
             }
         });
