@@ -55,6 +55,11 @@ body {
 	height: 500px;
 	overflow: auto;
 	margin-left:150px;
+	-webkit-user-select: none;
+  -moz-user-select: -moz-none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 #right-container {

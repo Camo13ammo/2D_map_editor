@@ -82,8 +82,23 @@
         this.tileSize = tileSize;
         this.tileCount_X = tileCount_X;
         this.tileCount_Y = tileCount_Y;
+        this.dragging = false;
         this.level = Array(tileCount_Y).fill().map(() => Array(tileCount_X).fill(false));
     }
+
+    Grid.prototype.draw = function (event) {
+        if (!this.spriteData) return; // Some error for no sprite selected
+        const offset = this.$canvas.offset();
+        const tile_x = Math.floor((event.pageX - offset.left) / (this.tileSize));
+        const tile_y = Math.floor((event.pageY - offset.top) / (this.tileSize));
+        // TODO: Prevent duplicate draws of same image
+        this.ctx.drawImage(this.spriteData.img, // Image source
+            this.spriteData.x * this.spriteData.dx, this.spriteData.y * this.spriteData.dy, //x, y coord start
+            this.spriteData.dx, this.spriteData.dy, // x, y clipping size
+            tile_x * this.tileSize, tile_y * this.tileSize, // x, y placement start
+            this.tileSize, this.tileSize); // x, y placement size
+        this.level[tile_y][tile_x] = true; // TODO: Store image data instead
+    };
 
     Grid.prototype.createAndShow = function () {
 
@@ -119,19 +134,13 @@
 
         // Click to add new sprite to grid
         this.$canvas.mousedown(event => {
-            if (!this.spriteData) return; // Some error for no sprite selected
-            const offset = this.$canvas.offset();
-            const tile_x = Math.floor((event.pageX - offset.left) / (this.tileSize));
-            const tile_y = Math.floor((event.pageY - offset.top) / (this.tileSize));
-            this.ctx.drawImage(this.spriteData.img, // Image source
-                this.spriteData.x * this.spriteData.dx, this.spriteData.y * this.spriteData.dy, //x, y coord start
-                this.spriteData.dx, this.spriteData.dy, // x, y clipping size
-                tile_x * this.tileSize, tile_y * this.tileSize, // x, y placement start
-                this.tileSize, this.tileSize); // x, y placement size
-            this.level[tile_y][tile_x] = true;
+            event.originalEvent.preventDefault();
+            this.dragging = true;
+            this.draw(event);
         });
 
         this.$canvas.mouseup(event => {
+            this.dragging = false;
             const snap = this.$canvas[0].toDataURL();
             $("#grid-management").css({
                 "background-image" : "url(" + snap + ")",
@@ -142,13 +151,14 @@
 
         // Hovering over grid previews the sprites
         this.$canvas.mousemove(event => {
+            if (this.dragging) this.draw(event);
             const offset = this.$canvas.offset();
             const $preview = $("#sprite-preview");
             $preview.show();
             $preview.css({
                 'top': Math.floor((event.pageY - offset.top) / (this.tileSize)) * this.tileSize,
                 'left': Math.floor((event.pageX - offset.left) / (this.tileSize)) * this.tileSize,
-            })
+            });
             if (this.spriteData) {
                 $preview.css({
                     'border': 'none',
