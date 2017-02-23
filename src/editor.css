@@ -42,6 +42,7 @@ body {
 }
 
 #pallet-container {
+	position: relative;
 	height: 290px;
 	width: 300px;
 	overflow: scroll;
@@ -55,6 +56,7 @@ body {
 	height: 500px;
 	overflow: auto;
 	margin-left:150px;
+	/* To prevent 'select-cursor' on click-drag */
 	-webkit-user-select: none;
   -moz-user-select: -moz-none;
   -webkit-user-select: none;
@@ -72,28 +74,34 @@ body {
 	pointer-events: none;
 }
 
+#selected-tile-indicator {
+	background-color: rgba(0, 149, 221, 0.4);
+	position: absolute;
+	pointer-events: none;
+}
+
 ::-webkit-scrollbar {
-    width:9px;
+  width:9px;
 }
 
 ::-webkit-scrollbar-track {
-    -webkit-border-radius:5px;
-    border-radius:5px;
-    background:rgba(0,0,0,0.1);
+  -webkit-border-radius:5px;
+  border-radius:5px;
+  background:rgba(0,0,0,0.1);
 }
 
 ::-webkit-scrollbar-thumb {
-    -webkit-border-radius:5px;
-    border-radius:5px;
-    background:rgba(0,0,0,0.2);
+  -webkit-border-radius:5px;
+  border-radius:5px;
+  background:rgba(0,0,0,0.2);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background:rgba(0,0,0,0.4);
+  background:rgba(0,0,0,0.4);
 }
 
 ::-webkit-scrollbar-thumb:window-inactive {
-    background:rgba(0,0,0,0.05);
+  background:rgba(0,0,0,0.05);
 }
 
 /*::-webkit-scrollbar {
