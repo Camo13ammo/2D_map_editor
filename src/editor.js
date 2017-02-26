@@ -19,36 +19,78 @@
         this.selectedSheet = null;
         this.selectedSpriteData = null;
         this.tileSize = tileSize;
+        this.magnification = 1;
         this.spriteSheets = [];
         this.$canvas = $('<canvas/>');
         this.ctx = this.$canvas[0].getContext("2d");
         $("#pallet-container").prepend(this.$canvas);
-        const $selectedTileIndicator = $("#selected-tile-indicator");
+
+        //Prevents the canvas from anti-aliasing tiles
+        this.ctx.mozImageSmoothingEnabled = false;
+        this.ctx.webkitImageSmoothingEnabled = false;
+        this.ctx.msImageSmoothingEnabled = false;
+        this.ctx.imageSmoothingEnabled = false;
+        this.ctx.oImageSmoothingEnabled = false;
+
         this.$canvas.click(event => {
             const offset = this.$canvas.offset();
-            $selectedTileIndicator.css({
-                'left': Math.floor((event.pageX - offset.left) / (this.tileSize)) * this.tileSize,
-                'top': Math.floor((event.pageY - offset.top) / (this.tileSize)) * this.tileSize,
-                'min-width': this.tileSize,
-                'height': this.tileSize
+            const magnifiedTileSize = this.tileSize * this.magnification;
 
-            })
+            // Place the blue "selected tile" indicator
+            $("#selected-tile-indicator").css({
+                'left': Math.floor((event.pageX - offset.left) / (magnifiedTileSize)) * magnifiedTileSize,
+                'top': Math.floor((event.pageY - offset.top) / (magnifiedTileSize)) * magnifiedTileSize,
+                'min-width': magnifiedTileSize,
+                'height': magnifiedTileSize
+            });
+
+            // Set the selected sprite from the pallet
             this.selectedSpriteData = {
                 img: this.selectedSheet,
-                x: Math.floor((event.pageX - offset.left) / (this.tileSize)),
-                y: Math.floor((event.pageY - offset.top) / (this.tileSize)),
+                x: Math.floor((event.pageX - offset.left) / (magnifiedTileSize)),
+                y: Math.floor((event.pageY - offset.top) / (magnifiedTileSize)),
                 dx: this.tileSize,
                 dy: this.tileSize
             };
         });
     }
 
-    // TODO: add functionality for both x and y
-    Pallet.prototype.setSpriteSize = function (spriteSizeX, spriteSizeY) {
-        this.tileSize = spriteSizeX;
+    Pallet.prototype.zoom = function (inOut) {
+        if ((inOut > 0 && this.magnification === 10) ||
+            (inOut < 0 && this.magnification) === 0.25) return;
+
+        this.magnification += inOut > 0 ? 0.25 : (-1*0.25);
+        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+        this.ctx.canvas.height = this.selectedSheet.height * this.magnification;
+        this.ctx.canvas.width = this.selectedSheet.width * this.magnification;
+
+        // Prevents the canvas from anti-aliasing tiles
+        this.ctx.mozImageSmoothingEnabled = false;
+        this.ctx.webkitImageSmoothingEnabled = false;
+        this.ctx.msImageSmoothingEnabled = false;
+        this.ctx.imageSmoothingEnabled = false;
+        this.ctx.oImageSmoothingEnabled = false;
+
+        this.ctx.drawImage(
+            this.selectedSheet,
+            0, 0, this.selectedSheet.width, this.selectedSheet.height,
+            0, 0, this.ctx.canvas.width, this.ctx.canvas.height
+        );
+
+        if (this.selectedSpriteData) {
+            $("#selected-tile-indicator").css({
+                'left': this.selectedSpriteData.x * this.selectedSpriteData.dx * this.magnification,
+                'top': this.selectedSpriteData.y * this.selectedSpriteData.dy * this.magnification,
+                'min-width': this.tileSize * this.magnification,
+                'height': this.tileSize * this.magnification
+            });
+        }
+
+        this.drawGridLines();
     };
 
-    Pallet.prototype.addSpriteSheet = function (spriteURL) {
+    Pallet.prototype.addSpriteSheet = function (spriteURL, tileSizeX) {
+        this.tileSize = tileSizeX;
         const img = new Image();
         img.onload = function() {
             this.ctx.canvas.height = img.height;
@@ -62,22 +104,30 @@
         this.selectedSheet = this.spriteSheets[index];
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
         this.ctx.drawImage(this.selectedSheet, 0, 0);
+        this.drawGridLines();
+    };
 
-        // Drawing vertical lines
-        for (let x = 0; x <= this.ctx.canvas.width; x += this.tileSize) {
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, this.ctx.canvas.height);
-        }
+    Pallet.prototype.drawGridLines = function () {
+            const $gridLines = $('#grid-lines');
+            const gridLinesCtx = $gridLines[0].getContext("2d");
+            gridLinesCtx.clearRect(0, 0, gridLinesCtx.canvas.width * this.magnification, gridLinesCtx.canvas.height * this.magnification);
+            gridLinesCtx.canvas.height = this.selectedSheet.height * this.magnification;
+            gridLinesCtx.canvas.width = this.selectedSheet.width * this.magnification;
+            // Drawing vertical lines
+            for (let x = 0; x <= gridLinesCtx.canvas.width; x += (this.tileSize * this.magnification)) {
+                gridLinesCtx.moveTo(x, 0);
+                gridLinesCtx.lineTo(x, gridLinesCtx.canvas.height);
+            }
 
-        // Drawing horizontal lines
-        for (let y = 0; y <= this.ctx.canvas.height; y += this.tileSize) {
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(this.ctx.canvas.width, y);
-        }
+            // Drawing horizontal lines
+            for (let y = 0; y <= gridLinesCtx.canvas.height; y += (this.tileSize * this.magnification)) {
+                gridLinesCtx.moveTo(0, y);
+                gridLinesCtx.lineTo(gridLinesCtx.canvas.width, y);
+            }
 
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeStyle = "white";
-        this.ctx.stroke();
+            gridLinesCtx.lineWidth = 2;
+            gridLinesCtx.strokeStyle = "white";
+            gridLinesCtx.stroke();
     };
 
     function Grid (tileSize, tileCount_X, tileCount_Y, world) {
@@ -138,7 +188,7 @@
             });
         }).mouseup(); // Initial click to display grid.
 
-        // Hovering over grid previews the sprites
+        // Hovering over grid previews the sprite
         this.$canvas.mousemove(event => {
             if (this.dragging) this.draw(event);
             const offset = this.$canvas.offset();
@@ -151,7 +201,7 @@
             if (this.world.pallet.selectedSpriteData) {
                 $preview.css({
                     'border': 'none',
-                    'background-size': 100 * (this.world.pallet.ctx.canvas.width / this.world.pallet.tileSize) + '%', // why is this?
+                    'background-size': 100 * (this.world.pallet.selectedSheet.width / this.world.pallet.tileSize) + '%', // why is this?
                     'image-rendering': 'pixelated',
                     'background-image': 'url(' + this.world.pallet.selectedSpriteData.img.src + ')',
                     'background-position-x': -1 * (this.world.pallet.selectedSpriteData.x * this.tileSize),
@@ -199,9 +249,8 @@
         this.$canvas.toggle();
     };
 
-    var world = new World(24, 20, 19);
-    world.pallet.addSpriteSheet("../sprites/screenshot.png");
-    world.pallet.setSpriteSize(24);
+    const world = new World(32, 60, 38);
+    world.pallet.addSpriteSheet("../sprites/screenshot.png", 24);
 
     $("#button").click(function() {
         $("#upload").click();
@@ -209,14 +258,22 @@
 
     $("#upload").change(function() {
         if (this.files && this.files[0]) {
-            var reader = new FileReader();
+            const reader = new FileReader();
 
             reader.onload = function (e) {
-                world.pallet.addSpriteSheet(e.target.result);
+                world.pallet.addSpriteSheet(e.target.result, 8);
             }
 
             reader.readAsDataURL(this.files[0]);
         }
+    });
+
+    $("#zoomIn").click(function() {
+        world.pallet.zoom(1);
+    });
+
+    $("#zoomOut").click(function() {
+        world.pallet.zoom(-1);
     });
 
     // $("#button").click(() => {
