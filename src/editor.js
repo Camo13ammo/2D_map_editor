@@ -154,7 +154,15 @@
 
         this.ctx.canvas.width = this.tileCount_X * this.tileSize;
         this.ctx.canvas.height = this.tileCount_Y * this.tileSize;
-        $("#grid-container").prepend(this.$canvas);
+        const $container = $("#grid-container");
+        $container.prepend(this.$canvas);
+
+        if (this.ctx.canvas.height < $container.height()) {
+            $container.addClass("vertical-center");
+        }
+        if (this.ctx.canvas.width < $container.width()) {
+            $container.addClass("horizontal-center");
+        }
 
         //Prevents the canvas from anti-aliasing tiles
         this.ctx.mozImageSmoothingEnabled = false;
@@ -200,12 +208,16 @@
         })
         .mousemove(event => {
             if (this.dragging) this.draw(event);
-            const offset = this.$canvas.offset();
+            const globalOffset = this.$canvas.offset();
+            const parentOffset = {
+                top: this.$canvas.position().top > 0 ? this.$canvas.position().top : 0,
+                left: this.$canvas.position().left > 0 ? this.$canvas.position().left : 0
+            }
             const $preview = $("#sprite-preview");
             $preview.show();
             $preview.css({
-                'top': Math.floor((event.pageY - offset.top) / (this.tileSize)) * this.tileSize,
-                'left': Math.floor((event.pageX - offset.left) / (this.tileSize)) * this.tileSize
+                'top': parentOffset.top + Math.floor((event.pageY - globalOffset.top) / (this.tileSize)) * this.tileSize,
+                'left': parentOffset.left + Math.floor((event.pageX - globalOffset.left) / (this.tileSize)) * this.tileSize
             });
             if (this.world.pallet.selectedSpriteData) {
                 $preview.css({
