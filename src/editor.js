@@ -55,14 +55,15 @@
         });
     }
 
+    // Zooms the pallet in and out.
     Pallet.prototype.zoom = function (inOut) {
         if ((inOut > 0 && this.magnification === 10) ||
             (inOut < 0 && this.magnification) === 0.25) return;
 
-        this.magnification += inOut > 0 ? 0.25 : (-1*0.25);
-        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-        this.ctx.canvas.height = this.selectedSheet.height * this.magnification;
-        this.ctx.canvas.width = this.selectedSheet.width * this.magnification;
+        this.magnification += inOut > 0 ? 0.25 : -1 * 0.25;
+        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height); // Clear canvas
+        this.ctx.canvas.height = this.selectedSheet.height * this.magnification; // Set new height
+        this.ctx.canvas.width = this.selectedSheet.width * this.magnification; // Set new width
 
         // Prevents the canvas from anti-aliasing tiles
         this.ctx.mozImageSmoothingEnabled = false;
@@ -71,12 +72,14 @@
         this.ctx.imageSmoothingEnabled = false;
         this.ctx.oImageSmoothingEnabled = false;
 
+        // Draw the whole image the full size of the new canvas
         this.ctx.drawImage(
             this.selectedSheet,
             0, 0, this.selectedSheet.width, this.selectedSheet.height,
             0, 0, this.ctx.canvas.width, this.ctx.canvas.height
         );
 
+        // If a sprite is selected, scale the transparent blue indicator
         if (this.selectedSpriteData) {
             $("#selected-tile-indicator").css({
                 'left': this.selectedSpriteData.x * this.selectedSpriteData.dx * this.magnification,
@@ -86,11 +89,14 @@
             });
         }
 
+        // Redraw pallet grid lines
         this.drawGridLines();
     };
 
+    // Add a sprite sheet to the pallet and specify size
     Pallet.prototype.addSpriteSheet = function (spriteURL, tileSizeX) {
         this.tileSize = tileSizeX;
+        this.magnification = 1;
         const img = new Image();
         img.onload = function() {
             this.ctx.canvas.height = img.height;
@@ -100,6 +106,7 @@
         img.src = spriteURL;
     };
 
+    // For swapping between different sprite sheets in the pallet
     Pallet.prototype.toggleSpriteSheet = function (index) {
         this.selectedSheet = this.spriteSheets[index];
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
@@ -107,28 +114,33 @@
         this.drawGridLines();
     };
 
+    // Draw the grid lines over the pallet
     Pallet.prototype.drawGridLines = function () {
-            const $gridLines = $('#grid-lines');
-            const gridLinesCtx = $gridLines[0].getContext("2d");
-            gridLinesCtx.clearRect(0, 0, gridLinesCtx.canvas.width * this.magnification, gridLinesCtx.canvas.height * this.magnification);
-            gridLinesCtx.canvas.height = this.selectedSheet.height * this.magnification;
-            gridLinesCtx.canvas.width = this.selectedSheet.width * this.magnification;
-            // Drawing vertical lines
-            for (let x = 0; x <= gridLinesCtx.canvas.width; x += (this.tileSize * this.magnification)) {
-                gridLinesCtx.moveTo(x, 0);
-                gridLinesCtx.lineTo(x, gridLinesCtx.canvas.height);
-            }
+        const $gridLines = $('#grid-lines');
+        const gridLinesCtx = $gridLines[0].getContext("2d");
+        gridLinesCtx.clearRect(0, 0, gridLinesCtx.canvas.width, gridLinesCtx.canvas.height); // Clear old lines
+        gridLinesCtx.canvas.height = this.selectedSheet.height * this.magnification;
+        gridLinesCtx.canvas.width = this.selectedSheet.width * this.magnification;
+        // Drawing vertical lines
+        for (let x = 0; x <= gridLinesCtx.canvas.width; x += (this.tileSize * this.magnification)) {
+            gridLinesCtx.moveTo(x, 0);
+            gridLinesCtx.lineTo(x, gridLinesCtx.canvas.height);
+        }
 
-            // Drawing horizontal lines
-            for (let y = 0; y <= gridLinesCtx.canvas.height; y += (this.tileSize * this.magnification)) {
-                gridLinesCtx.moveTo(0, y);
-                gridLinesCtx.lineTo(gridLinesCtx.canvas.width, y);
-            }
+        // Drawing horizontal lines
+        for (let y = 0; y <= gridLinesCtx.canvas.height; y += (this.tileSize * this.magnification)) {
+            gridLinesCtx.moveTo(0, y);
+            gridLinesCtx.lineTo(gridLinesCtx.canvas.width, y);
+        }
 
-            gridLinesCtx.lineWidth = 2;
-            gridLinesCtx.strokeStyle = "white";
-            gridLinesCtx.stroke();
+        gridLinesCtx.lineWidth = 2;
+        gridLinesCtx.strokeStyle = "white";
+        gridLinesCtx.stroke();
     };
+
+    Pallet.prototype.toggleGridLines = function () {
+        $('#grid-lines').toggle();
+    }
 
     function Grid (tileSize, tileCount_X, tileCount_Y, world) {
         this.world = world;
@@ -171,14 +183,13 @@
         this.ctx.stroke();
 
         // Click to add new sprite to grid
-        this.$canvas.mousedown(event => {
+        this.$canvas
+        .mousedown(event => {
             event.originalEvent.preventDefault();
             this.dragging = true;
             this.draw(event);
-        });
-
-        // Update minimap when lifting mouse
-        this.$canvas.mouseup(event => {
+        })
+        .mouseup(event => {
             this.dragging = false;
             const snap = this.$canvas[0].toDataURL();
             $("#grid-management").css({
@@ -186,10 +197,8 @@
                 "background-size": "contain",
                 "background-repeat": "no-repeat"
             });
-        }).mouseup(); // Initial click to display grid.
-
-        // Hovering over grid previews the sprite
-        this.$canvas.mousemove(event => {
+        })
+        .mousemove(event => {
             if (this.dragging) this.draw(event);
             const offset = this.$canvas.offset();
             const $preview = $("#sprite-preview");
@@ -217,7 +226,7 @@
                     'height': this.tileSize-4,
                 });
             }
-        });
+        }).mouseup(); // Initial click to display grid.
 
         // On Mouse out of grid, hides the sprite preview
         this.$canvas.mouseout(event => {
@@ -249,14 +258,14 @@
         this.$canvas.toggle();
     };
 
-    const world = new World(32, 60, 38);
+    const world = new World(24, 50, 20);
     world.pallet.addSpriteSheet("../sprites/screenshot.png", 24);
 
-    $("#button").click(function() {
+    $("#button").click(function () {
         $("#upload").click();
     });
 
-    $("#upload").change(function() {
+    $("#upload").change(function () {
         if (this.files && this.files[0]) {
             const reader = new FileReader();
 
@@ -268,23 +277,16 @@
         }
     });
 
-    $("#zoomIn").click(function() {
+    $("#zoomIn").click(function () {
         world.pallet.zoom(1);
     });
 
-    $("#zoomOut").click(function() {
+    $("#zoomOut").click(function () {
         world.pallet.zoom(-1);
     });
 
-    // $("#button").click(() => {
-
-    // })
-    // $("#zoom-in").on("click", function () {
-    //     world.pallet.addSpriteSheet("../sprites/ss2.png");
-    // })
-    // $("#zoom-out").on("click", function () {
-    //     world.pallet.toggleSpriteSheet(Math.round(Math.random()));
-    // })
-
+    $("#togglePalletGridLines").click(function () {
+        world.pallet.toggleGridLines();
+    });
 
 })();
